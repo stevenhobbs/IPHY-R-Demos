@@ -20,7 +20,7 @@ IPHY instructors can follow the steps below to contribute to the repository.
   c. Push the branch to the remote repository.\
   d. Create a pull request (PR) from your branch to the develop branch.\
   e. I will review the PR, provide feedback, and approve it if appropriate.\
-  f. Once approved, collaborators can merge the PR into the develop branch.\
+  f. Once approved, collaborators can merge the PR into the develop branch.
 
 2. For suggesting changes to the main Branch (i.e. typo fixes, bug fixes, small changes):\
   a. Clone the repository (create a local GIT repository) and create a new branch based on the main branch.\
@@ -28,7 +28,7 @@ IPHY instructors can follow the steps below to contribute to the repository.
   c. Push the branch to the remote repository.\
   d. Create a pull request (PR) from your branch to the main branch.\
   e. I will review and approve the PR.\
-  f. Once approved, you can merge the PR into the main branch.\
+  f. Once approved, you can merge the PR into the main branch.
 
 ### Contact
 
