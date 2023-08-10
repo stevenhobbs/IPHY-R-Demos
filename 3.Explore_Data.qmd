@@ -1,0 +1,274 @@
+---
+title: "Demo3"
+subtitle: "Explore Data"
+format: 
+    html:
+        toc: true
+        code-fold: true
+        code-tools: true
+editor: visual
+output: false
+message: false
+---
+
+Load packages
+
+```{r}
+pacman::p_load(tidyverse, magrittr, knitr, kableExtra, GGally)
+```
+
+Exploratory data analysis (EDA) is learning about a dataset without focusing on preconceived expectations or hypotheses. EDA can reveal unexpected insights, and influence how data are subsequently analyzed. While every data situation is unique, a basic EDA should explore the completeness of the data (AKA missingness), univariate distributions for categorical and quantitative variables, outliers and erroneous or impossible values, and correlations between variables. Simple plots like histograms and bar graphs are created to explore distributions, while tables with measures of center, variation, and frequency are created to explore variables numerically. In this section we start with data that are already wrangled and ready for analysis. However, data wrangling and exploratory data analysis are often intermixed, as data wrangling enables exploratory data analysis, and exploratory data analysis can reveal additional problems with the data.
+
+```{r}
+# Import Processed (already wrangled) Data
+tbl <- read_csv('data/processed_cholesterol.csv',
+                col_types = 'fnffnffnnnnn')
+```
+
+# Characterize Missing Values
+
+Knowing which variables and observations have missing values can be important for an analysis. At a minimum we should know how many missing values exist and if the missing values are randomly distributed or concentrated at certain timepoints, groups, or other conditions. Below we demonstrate a few simple methods for characterizing missing values.
+
+```{r}
+# How many missing values exist?
+tbl %>% is.na %>% sum
+
+# How many rows have missing values?
+tbl %>%
+    filter(!complete.cases(tbl)) %>%
+    nrow()
+
+# Which variables have missing values?
+summary(tbl)
+
+# Are the total cholesterol missing values balanced across timepoints?
+tbl %>%
+    group_by(timepoint) %>%
+    filter(is.na(tc)) %>%
+    summarize("Total Cholesterol NA's" = n())
+```
+
+# Descriptive Statistics
+
+## Base R commands
+
+```{r}
+#| output: false
+mean(tbl$height)
+min(tbl$height) 
+max(tbl$height) 
+range(tbl$height) 
+sd(tbl$age)
+summary(tbl$age)
+summary(tbl$sex)
+```
+
+## Ignoring NA's
+
+R commands don't ignore NA by default, as demonstrated below.
+
+```{r}
+mean(tbl$hdl)
+
+tbl %>%
+    ggplot(aes(x = sex, y = hdl)) +
+    geom_bar(stat = 'summary',
+             fun = mean)
+```
+
+### na.rm = TRUE
+
+The na.rm = TRUE tells R to remove (ignore) NAs
+
+```{r}
+mean(tbl$hdl, na.rm =TRUE)
+```
+
+### drop_na
+
+The drop_na commad will drop all rows with any missing values (default) or will drop rows with missing values for specific columns.
+
+```{r}
+# drop all rows with any missing values
+tbl %>%
+    drop_na %>%
+    summary
+
+# drop rows with missing values in specific columns
+tbl %>%
+    drop_na(sex, hdl) %>%
+    ggplot(aes(x = sex, y = hdl)) +
+    geom_bar(stat = 'summary',
+             fun = mean)
+```
+
+# Distributions & Bivariate Relationships
+
+Distributions present the values of a variable and the frequency each value is observed. Exploring distributions tell us qualitative information about center, variation, shape, and outliers and identify strengths and limitations in the data, such as normal distributions (a strength) and imbalanced experimental designs (a weakness). In the exploratory data analysis phase, we generally want to explore many possible relationships and are not yet creating polished graphs for publication.
+
+## GGally::ggpairs
+
+The tidyverse-aligned command ggpairs() from the GGally package creates plot mosaics that are helpful for exploring many distributions and relationships with just a few lines of code.
+
+### Categorical Distributions and Bivariate Relationships
+
+```{r}
+#| message: false
+#| warning: false
+tbl %>% 
+    filter(timepoint == "initial") %>%
+    select(age_c, sex, group) %>%
+    drop_na() %>%
+    ggpairs(showStrips = TRUE)
+```
+
+### Quantitative distributions & Bivariate Relationships
+
+```{r}
+#| message: false
+tbl %>%
+    filter(timepoint == 'initial') %>% 
+    select(where(is.numeric)) %>%
+    drop_na() %>%
+    ggpairs()
+```
+
+### Specific Quantitative distributions & Bivariate Relationships, Colored by Factor
+
+```{r}
+#| message: false
+pm <- 
+    tbl %>%
+    filter(timepoint == 'initial') %>%
+    drop_na() %>%
+    ggpairs(aes(color = sex), columns = c('age', 'bmi', 'hdl', 'ldl', 'tc'))
+pm
+```
+
+### Isolate and Customize Plots
+
+With the plot mosaic assigned to an object name ("pm" above), we can use base R brackets to isolate and customize a plot with additional ggplot layers. ggplot is covered in lesson 12.
+
+```{r}
+#| message: false
+pm[5,1] + 
+    labs(y = "total cholesterol (ng/dl)") + 
+    geom_smooth(method = 'lm', se = F) +
+    theme_bw()
+```
+
+## Frequency Tables with Base R
+
+Frequency tables show the counts at each level of a categorical variable. When a frequency table includes a second categorical variable, it is called a two-way table.
+
+```{r}
+# A one-way table
+table(tbl$sex)
+
+# A two-way table
+table(tbl$sex, tbl$group)
+
+# Add HTML formatting with commands from knitr::kable and kableExtra::kable_classic
+
+table(tbl$sex, tbl$group) %>%
+    kable() %>% 
+    kable_classic(full_width = F)
+```
+
+## Frequency Tables with Janitor Package
+
+With multiple categorical variables, we often wish to know conditional percentages in addition to observation counts. The Janitor package provides the tabyl() (spelled with a 'y') command for creating frequency tables with conditional percentages, and has the added benefit of being tidyverse aligned. However, janitor is not imported with tidyverse and must be loaded with a separate library command, or added to the package list in p_load().
+
+```{r}
+#| message: false
+library(janitor) 
+
+# Load and preview the starwars data
+data(starwars, package = 'dplyr')
+glimpse(starwars)
+
+# Convert character variables into factors using mutate_at
+starwars %<>% 
+    mutate_at(vars(hair_color, skin_color, eye_color, sex, gender, homeworld, species), 
+              as.factor)
+
+# A simple one-way frequency table using tabyl with HTML formatting provided by kable() %>% kable_classic(full_width = F)
+starwars %>% 
+    tabyl(eye_color) %>% 
+    adorn_rounding(2) %>%
+    kable() %>% kable_classic(full_width = F)
+
+# A two-way table for eye color and gender for non-droids using tabyl
+starwars %>%
+    filter(species != 'Droid') %>%
+    tabyl(gender, eye_color) %>% 
+    kable() %>% kable_classic(full_width = F)
+```
+
+### "adorn" frequency table with details
+
+After the initial table setup using `tabyl()`, we "adorn" the table with additional features linked together in a pipe chain. Lastly, because the output is still a tibble, we can pipe into the kable() and kable_classic commands to create an aesthetically pleasing table ready for presentation or publication.
+
+```{r}
+starwars %>%
+    filter(species == 'Human') %>%
+    tabyl(gender, eye_color) %>%
+
+    # add totals, conditional percents, rounding
+    adorn_totals(c("row", "col")) %>%
+    adorn_percentages("row") %>% 
+    adorn_pct_formatting(rounding = "half up", digits = 0) %>%
+    
+    # add sample sizes in parentheses
+    adorn_ns() %>% 
+    
+    # add a title
+    adorn_title("combined", 
+                row_name = "Gender", 
+                col_name = "Eye Color") %>%
+    
+    # add nice aesthetics
+    kable %>% kable_classic(full_width = FALSE)
+```
+
+## Pivot tables with `group_by()` & `summarize()`
+
+Pivot tables present descriptive information about data grouped at the levels of one or more categorical variables. This is a useful approach when we wish to compare characteristics between males and females, or across ethnicity, age groups, treatment groups, etc.
+
+The tidyverse commands `group_by()` and `summarize()` work together to create new tibbles, "pivot tables", with summary statistics, grouped by one or more factor variables. When we produce these summary tibbles for reports and presentations, we often break the naming rules by including spaces and enclosing the name in quotes as shown below. Lastly, we use commands from the knitr and kableExtra packages to format our tibble with publication-ready aesthetics.
+
+Pivot table with one grouping variable
+
+```{r}
+#| message: false
+tbl %>% 
+    drop_na(sex, height) %>%
+    
+    group_by(sex) %>% 
+    
+    summarize('Height Mean'  = mean(height) %>% round(1),
+              'Height SD' = sd(height) %>% round(1)) %>%
+    
+    kable() %>% # kable is from knitr
+    
+    kable_classic(full_width = F) # kable_classic is from kableExtra
+```
+
+Pivot table with two grouping variables and nice formatting.
+
+```{r}
+tbl %>%
+    group_by(sex, group) %>%
+    
+    summarize(Count = n(),
+              'Age Mean' = mean(age) %>% round,  
+              'Age SD' = sd(age) %>% round,
+              'Age Median' = median(age),
+              'Age min' = min(age),
+              'Height Mean' = mean(height) %>% round, 
+              'Height SD' = sd(height) %>% round) %>%
+    
+    kable() %>% # kable is from knitr
+    
+    kable_classic(full_width = F) # kable_classic is from kableExtra
+```

@@ -1,0 +1,297 @@
+---
+title: "Demo 1"
+subtitle: "The R Coding Environment"
+author: "Steven Hobbs"
+date: "May 24, 2023"
+format: 
+    html:
+        toc: true
+        code-fold: true
+        code-tools: true
+editor: visual
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Load Packages
+
+Use the first code chunk to load packages, but don't show the output in rendered documents. The library command is the standard way to load individual packages. The p_load command from the pacman package can load multiple packages in one execution. The "::" below grabs the p_load command for one-time use without loading the entire pacman package.
+
+```{r}
+#| output: false
+
+# Laad tidyerse
+library(tidyverse)
+
+# Load several packages simultaneously 
+pacman::p_load(tidyverse, magrittr, knitr, kableExtra)
+```
+
+# Import Data
+
+*R* can import many data formats, including .csv, .txt, .json, .xlsx, and *R*'s native format .Rdata. Different file types require different import commands. *Data Essentials With R* will mostly use .csv files imported as tibbles with the tidyverse command `read_csv()`. Note that `read_csv()` is a different command than `read.csv()`, a base *R* command that creates dataframes. In general, "." in a function name indicates a base R command, while "\_" indicates a tidyverse command.
+
+Importing from a raw data source, such as a csv file, has a reproducibility advantage over analyzing data with an application like Microsoft Excel. Importing prevents the raw data file from being altered by the analysis and leaves a record of every step taken with the data.
+
+## CSV files
+
+The most common file type for statistics is csv, which means comma separated value. We will use csv files almost exclusively in IPHY 3280
+
+```{r}
+#| output: false
+
+# Use "read_csv" to load csv data with a relative file path (GOOD APPROACH)
+df1 <- read_csv("data/cardiac.csv")
+```
+
+## Other file types & sources
+
+```{r}
+# Import data from an Excel file
+library(readxl)
+df_excel <- read_excel('data/processed_cleveland.xlsx', 
+                       sheet = "Sheet2")
+
+# Load (stage) datasets included in base R
+data(cars, USArrests, BOD)
+
+# Load (stage) datasets included in a package
+data(cancer, package = 'survival')
+
+# Load data saved in native R format (.rdata)
+load('data/ESTRADL.rdata')
+
+# Do NOT use "read_csv" as shown below to load csv data with an 
+# absolute file path!!!
+# df2 <- read_csv("~/Documents/3_Current_Classes/0.3280_SU23/4.QuartoDemo 3280/data/cardiac.csv")
+```
+
+Clear the R Global Environment
+
+```{r}
+rm(list = ls())
+```
+
+# Data Structures
+
+## Create Data in R
+
+```{r}
+# create a vector x with values from -5 to 5
+x <- -5:5 
+
+# create a vector y from x squared.
+y <- x^2 +.123
+
+# create a vector using the "c" command
+z <- c('a', 'b', 'c', 'd', rep('e', 7))
+
+# create a dataframe and a tibble (tidyverse dataframe) 
+# tibbles and dataframes are nearly identicle data structures
+data_df <- data.frame(x,y,z)
+data_tb <- tibble(x,y, z)
+
+# Create a list 
+my_list = list('item1' = x, 
+               'item2' = y, 
+               'data1' = data_df, 
+               'data2' =  data_tb,
+               'my_list2' = list('one' = x, 
+                                 'two' = data_df, 
+                                 'three' = z))
+
+# Create data while creating a tibble (or dataframe)
+tb <- tibble(x = 1:20, y = sqrt(x), z = rep(c('male', 'female'), 10))
+```
+
+## View data and metadata: head() and str()
+
+```{r}
+# View the first n elements of a data structure (default n = 6)
+head(data_tb, n = 4)
+
+# str() shows the structure and metadata of an object
+str(my_list)
+```
+
+## Tidyverse Pipe operator, %\>%
+
+The pipe operator is a fantastic command that makes code easier to write and easier to understand. Piping is particularly useful with dataframes and tibbles. Essentially the command means...
+
+Take the left thing and "pipe it" into the right thing.
+
+```{r}
+# Unnecessary piping (just for demonstration)
+x %>% head()
+data_tb %>% head(n = 4)
+my_list %>% head(3)
+
+# More useful piping
+y %>% abs %>% sqrt %>% round(2) %>% mean(na.rm = TRUE)
+
+# The equivalent code without %>% is harder to write and understand
+mean(round(sqrt(abs(y)), 2), na.rm = TRUE)
+```
+
+# Extracting from Data Structures (subsetting)
+
+## The \$ operator
+
+The \$ operator strips the parent data structure away from the returned object
+
+```{r}
+# single level extraction from dataframes and lists
+data_tb$x
+my_list$data1
+
+# multilevel extraction
+my_list$my_list2$two$y
+```
+
+## Brackets \[ \] & \[\[ \]\]. OPTIONAL
+
+Brackets are a staple method for reducing data common to many programming languages. However, we will generally avoid their use in this course and rely upon more readable commands from the tidyverse package. The most important details about brackets are how they behave on tibbles and dataframes. Brackets used with tibbles and dataframes can take one or two arguments:
+
+-   Single arguments identify columns by name or index:
+    -   df\['col_name'\]\
+-   When two arguments are used, they identify rows first then columns:
+    -   df\[row_numbers, 'col_name'\]
+
+### Single brackets \[ \]
+
+Single brackets used with tibbles always return a tibble, even if the tibble contains a single value. Single brackets used with dataframes may return a vector or a dataframe, depending on context. The consistent behavior of tibbles is an advantage over dataframes.
+
+```{r}
+# Using single brackets on a list always returns a list, which can be confusing and problematic.
+my_list['item1'] %>% str
+my_list['data1'] %>% str
+
+# Using single brackets on tibbles is consistent and convenient. A tibble is always returned 
+data_tb['y'] %>% str
+data_tb[1, 'y'] %>% str
+data_tb[1, c('x', 'y')] %>% str
+
+# Using single brackets on dataframes will return a dataframe if only 1 argument is used, or a vector if both arguments are used.
+data_df['y'] %>% str
+data_df[1:3, 'y'] %>% str
+```
+
+### Double brackets \[\[ \]\]
+
+Double brackets strip the parent data structure from the returned object. The returned object has the simplest data structure possible.
+
+```{r}
+# Double brackets strip away the list structure
+my_list[['item1']] %>% str
+my_list[['data1']] %>% str
+
+# Double brackets strip away the tibble/dataframe structure
+data_tb[['y']] %>% str
+data_tb[[1, 'y']] %>% str
+data_df[['y']] %>% str
+
+# Double brackets enable multilevel extraction
+my_list[['my_list2']][['two']][['x']]
+```
+
+## select(), filter(), slice(). REQUIRED
+
+Tidyverse select, slice, and filter all return tibbles or dataframes that are reduced in some way:
+
+-   **select()** extracts specific columns
+-   **filter()** extracts rows based on criteria (logical arguments)
+-   **slice()** extracts rows based on indexes
+
+Note that tidyverse commands generally do not require variables to be quoted.
+
+```{r}
+data_tb %>% select(y)
+data_tb %>% filter(y > 10)
+data_tb %>% slice(c(1:3,5))
+
+# Data reduction pipe chain
+data_tb %>% 
+    select(x, y) %>%
+    filter(x > 0, y > 10) %>%
+    slice(1)
+```
+
+# Plotting Intro
+
+## Plot with base R
+
+```{r}
+# Base R plot
+plot(data_tb$x, data_tb$y)
+```
+
+## Plot with ggplot from tidyverse (much more in later demos)
+
+```{r}
+data_tb %>% 
+    ggplot(mapping = aes(x = x, y = y)) +
+    geom_point() +
+    labs(x = "These are x-values", 
+         y = "These are y-values",
+         title = "A plot of x and y values using ggplot") +
+    theme_bw()
+```
+
+# Headers
+
+Level 1 headers are the outermost outline component
+
+## Level 2 Header
+
+### Level 3 Header
+
+#### Level 4 Header
+
+##### Level 5 Header
+
+###### level 6 Header
+
+```{r}
+print("Hello from level 6")
+```
+
+# Python in Quarto. OPTIONAL
+
+```{python}
+#| echo: fenced
+# reticulate package required
+print("Hello from the python interpreter")
+```
+
+**The only Python code I will show in class...**
+
+Import libraries & create data
+
+```{python}
+#| code-fold: show
+# Choose Python Environment: Tools > Project Options... > Python
+import seaborn as sns
+
+iris = sns.load_dataset('iris')
+```
+
+Access Python objects with *R* using `py` from reticulate package.
+
+```{r}
+#| code-fold: show
+library(reticulate)
+py$iris %>% str
+py$iris %>%
+    ggplot(aes(sepal_length, sepal_width)) +
+    geom_point()
+```
+
+Access R objects from Python using `r` command
+
+```{python}
+py_dict = r.my_list
+py_dict.keys()
+py_dict['data1'].head(2)
+```
+
+**Read more about using Python and R together in the [Reticulate page](https://rstudio.github.io/reticulate/) on Github**

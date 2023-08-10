@@ -1,0 +1,73 @@
+---
+title: "More Pivoting Scenarios"
+format: html
+editor: visual
+output: false
+message: false
+---
+
+```{r}
+library(tidyverse)
+```
+
+Sometimes data are produced without the foresight of pivoting. Variable names may not lend themselves to easy separations because they do not use a handy separator, like "\\\_". Below are two pivoting examples involving problematic column names.
+
+## Special character separators (escaping)
+
+Below we import the cholesterol data used earlier, but from a file that uses "." instead of "\\\_" in variable names. Periods are a poor choice because they are special characters with other meanings in R. However, we can use escape characters, two backslashes, to make R interpret the period as text.
+
+```{r}
+#| message: false
+read_csv("data/cholesterol_dot.csv") %>% head(2)
+
+tbl <-
+    read_csv("data/cholesterol_dot.csv") %>% 
+    
+    pivot_longer(cols = weight.i:ldl.f,
+                 names_sep = "\\.", 
+                 names_to = c(".value", "timepoint"))
+
+head(tbl, 2)
+```
+
+## Pivoting with no separator
+
+### Using character indexes
+
+In the next two examples, we use a version of the data that has no name separator. Variable names are simply appended with a letter, i or f, that codes for initial and final time points. Fortunately, the `names_sep = ()` argument can break apart variable names based on a character index value. In this case, we can use -1 to break off the last character of each variable name.
+
+```{r}
+#| message: false
+read_csv("data/cholesterol_none.csv") %>% head(2)
+
+tbl <- 
+    read_csv("data/cholesterol_none.csv") %>%
+    pivot_longer(cols = weighti:ldlf,
+                 names_sep = -1, 
+                 names_to = c(".value", "timepoint"))
+
+head(tbl, 2)
+```
+
+### Renaming variables
+
+In this example, the variable names use no separator and instead of appending with single characters, the words initial and final are appended to the variable names. This was another poor choice because there is no easy way to separate the parts of these variable names. One solution is to create new names in R that use an underscore. After renaming, we can pivot as before using the `names_sep = "_"` and `names_to` arguments.
+
+```{r}
+#| message: false
+read_csv("data/cholesterol_rename.csv") %>% head(2)
+
+tbl <- 
+    read_csv("data/cholesterol_rename.csv") %>%
+    rename(weight_initial = weightinitial, 
+           hdl_initial = hdlinitial, 
+           ldl_initial = ldlinitial,
+           weight_final = weightfinal, 
+           hdl_final = hdlfinal, 
+           ldl_final = ldlfinal) %>%
+    pivot_longer(cols = weight_initial:ldl_final,
+                 names_sep = "_",
+                 names_to = c(".value", "timepoint"))
+
+head(tbl, 2)
+```

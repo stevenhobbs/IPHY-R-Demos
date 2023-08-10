@@ -1,0 +1,137 @@
+---
+title: "R Demo 4 GGPLOT BASICS"
+author: "Steven Hobbs"
+date: "May 24, 2023"
+format: 
+    html:
+        toc: true
+        code-fold: true
+        code-tools: true
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+# ggplot Basics
+
+## ggplot2
+
+ggplot2 is a Tidyverse package for creating plots based on the "grammar of graphics". The minimal requirements to create a ggplot2 object are:
+
+1.  a tibble/dataframe passed to ggplot(), e.g., data_tb %\>% ggplot()
+2.  variables mapped to the plot: mappings = aes(x = ..., y = ..., color = ...)
+3.  geometric layer(s), e.g., geom_plot(), geom_bar(), geom_histogram, ...
+
+ggplot2 offers many options to customize nearly everything about a plot. In this lesson we introduce staple plots in biological research with minimal code. In the subsequent lesson we present additional features most commonly added to these and other plots.
+
+**Import data for graphing:**\
+In the code below we import data from two files and name the tibbles tb_chol and tb_camp.
+
+```{r}
+#| message: false
+#| output: false
+#| code-fold: true
+library(tidyverse)
+rm(list = ls())
+
+tb_chol <- read_csv(file = "data/processed_cholesterol.csv",
+                    col_types = 'fnffnffnnnnn')
+
+tb_camp <- read_csv("data/CAMP_3280.csv") %>%
+    
+    mutate(ETHNIC = fct_recode(ETHNIC,
+                               "black" = "b",
+                               "white" = "w",
+                               "hipanic/latino" = "h",
+                               "other" = "o"),
+           GENDER = as.factor(GENDER),
+           GENDER = fct_recode(GENDER, "female" = "0", "male" = "1"))
+```
+
+## Minimal Plot Examples
+
+### Scatterplot & regression line
+
+Scatterplots require numeric variables on the x and y axis. A regression line is added with `geom_smooth()` and the arguments shown below. `"lm"` stands for linear model and just indicates a straight line. `se =` determines if standard error bars are included on the plot.
+
+```{r}
+#| output: false
+
+tb_chol %>% 
+    
+    ggplot(aes(height, weight)) +
+
+    geom_point() +
+
+    geom_smooth(method = "lm",
+                formula = y ~ x,
+                se = FALSE)
+```
+
+### Bar graph, frequencies
+
+geom_bar plots frequencies (counts) when provided with a single factor variable.
+
+```{r}
+tb_camp %>%  
+    
+    ggplot(mapping = aes(x=ETHNIC)) +
+    
+    geom_bar(position = position_dodge(.95),
+             color = 'blue',
+             fill = 'green')
+```
+
+### Bar graph, summary statistics
+
+When geom_bar() includes a 'stat="summary"' argument, the bar height will represent a summary statistic calculated for the numeric variable mapped to the plot. The summary statistic is identified by the `fun =` argument. The position of the bars is controlled by the `position = position_dodge(.95)`, which sets the bars side-by-side, instead of transposed vertically.
+
+```{r}
+tb_chol %>%
+    
+    ggplot(mapping = aes(sex, height)) + 
+    
+    geom_bar(stat="summary",
+             fun = mean,
+             position = position_dodge(.95))
+```
+
+### Pointrange graph
+
+Pointrange graphs emphasize a summary statistics, usually the mean, presented at the levels of a factor variable. The range component usually represents standard error or standard deviation. `geom_pointrange()` requires a factor variable, numeric variable, and summary statistic. A pointrange graph can show the same information as a bar graph with error bars.
+
+```{r}
+tb_chol %>%
+    
+    ggplot(mapping = aes(x=sex, y=height)) + 
+    
+    geom_pointrange(stat = "summary",
+                    fun = mean, 
+                    fun.min = function(X) mean(X) - sd(X),
+                    fun.max = function(X) mean(X) + sd(X),
+                    position = position_dodge(.95))
+```
+
+### Boxplot
+
+A boxplot shows the 5-number summary (min, first quartile, median, third quartile, max) of a numeric variable and may show outliers. geom_boxplot requires only a numeric variable. If a factor variable is included, side-by-side boxplots will be produced.
+
+```{r}
+tb_chol %>%
+    
+    ggplot(mapping = aes(x=timepoint, y=weight)) +
+    
+    geom_boxplot() 
+```
+
+### Histogram
+
+Histograms provide information about center, shape, spread, and outliers of a single numeric variable. geom_histogram requires only a single numeric variable.
+
+```{r}
+tb_camp %>%
+    
+    ggplot(mapping = aes(x = PREFEV)) +
+    
+    geom_histogram()
+```

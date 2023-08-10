@@ -1,0 +1,314 @@
+---
+title: "Demo 2"
+subtitle: "Wrangle Data"
+format: 
+    html:
+        toc: true
+        code-fold: true
+        code-tools: true
+editor: visual
+output: false
+message: false
+---
+
+Load packages
+
+```{r}
+pacman::p_load(tidyverse, magrittr, knitr, kableExtra)
+```
+
+# Data Wrangling
+
+## Data Wrangling Strategy
+
+Data that is free of problems and ready for analysis rarely falls into our laptops. Data wrangling is the process of fixing problems that otherwise roadblock our analysis and adding features that unlock the potential of our data. Performing this work in a script file, instead of changing the raw data file directly, preserves raw data in it's original state and enables reproduction of the analysis simply by executing code. This is important because if an analysis isn't reproducible, how can we know it was performed correctly?
+
+Common problems with data include missing values coded strangely, impossible or erroneous values, data in wide format, cryptic, inaccurate, or problematic variable names, missing features, and categorical variables that are coded with numbers instead of explicit values like "female" and "male".
+
+Rarely do we write a script that solves all problems perfectly the first time. We often return to earlier sections to add code we did not initially realize was necessary. However, jumping around within a script can introduce sequence errors, where code written near the top relies upon code written lower down. Because the code was initially executed in the order written, not the order of appearance, errors may not occur until rendering. During rendering,  *R* begins with an empty environment and executes code from top to bottom. Any code that was written out of order will now throw an error.
+
+An efficient data and reliable wrangling strategy is to fix problems immediately with a pipe chain data wrangling "recipe". With this strategy, our code pipes the output of the import command into a chain of problem-solving commands linked together by the pipe operator, %\>%. The receipe is built up progressively, adding and testing one component at a time. When complete, we have code that simultaneously imports data and fixes problems to produce a "mature" tibble that is ready for analysis.
+
+## Inspect the data
+
+Some problems can be identified after importing the data by viewing the data in tabular form and sorting the data by individual columns to view the smallest and largest values. Also useful, is to viewing the first few rows or "head" of the data and a summary of each column. The commands below develop familiarity with the data, such as by revealing variable types, missing values, and summary statistics.
+
+```{r}
+#| message: false
+rm(list = ls())
+
+# Import, summarize, and preview data 
+tbl <- read_csv('data/cholesterol.csv')
+View(tbl) # create a tabular data view, sort-able by individual columns. Do NOT include in script!
+head(tbl) # show the first 6 rows of the data
+glimpse(tbl) # list the variables vertically, along with variable types and values
+summary(tbl) # Show summary statistics and the number of NA values for each variable
+```
+
+## Code Missing Values
+
+From the summary and head of the data created above, we can see that missing values are variably coded as 999 in the gender column, \### in the hdl_i column, and "missing" in the weight_f column. Also, something fishy is happening in the weight_i column. The tibble head shows all numeric values, but the tbl summary indicates a character variable. By sorting the tibble values in the tabular view by the weight_i variable, we can see that missing weight_i values are erroneously coded as "N/A".
+
+### "na ="
+
+R does not recognize 999, N/A, ###, or "missing" as missing values. These values must be recoded as "NA" before we can analyze our data accurately. The `na =` argument added to the read_csv command can do this for all values in one step.
+
+### na_if
+
+If the raw data are not in a csv file, a different import command will be used, and the na= argument may not work within that command. Also, the "999" used to code missing values for one column, might be an actual value in another column. For these and other scenarios, the na_if command used within mutate allows missing values to be uniquely recoded for individual columns.
+
+```{r}
+#| message: false
+tbl <- read_csv('data/cholesterol.csv', 
+         na = c("N/A", "###", "missing")) %>%
+    
+    mutate(gender = na_if(gender, 999))
+
+summary(tbl)
+```
+
+## Pivot data (AKA reshape)
+
+Experimental data often includes observing characteristics at multiple timepoints, AKA "repeated measures" (RM). The data are easiest to collect in wide format, but wide format is not "tidy" and is problematic for analysis. Converting wide formatted data into long format is called reshaping or pivoting and is shown below.
+
+### Pivot with one RM variable
+
+Import and preview the margarine data below. Notice how observations were made at three timepoints and are organized in wide format.
+
+```{r}
+#| message: false
+marg <- read_csv("data/margarine.csv")
+head(marg)
+```
+
+When only one characteristic is observed at multiple timepoints, pivoting to long format is usually straightforward. Below we pivot the margarine data into long format. Notice that three columns of information are reorganized into two columns of information.
+
+```{r}
+#| message: false
+tbl <- 
+    read_csv("data/margarine.csv") %>%
+    
+    pivot_longer(cols = 2:4,
+                 names_to = "timepoint",
+                 values_to = "cholesterol")
+head(tbl)
+```
+
+### Pivot with multiple RM variables
+
+Import and preview the cholesterol data again. Notice that initial (i) and final (f) observations of several variables are recorded in wide format.
+
+```{r}
+#| message: false
+tbl <- read_csv('data/cholesterol.csv', 
+         na = c("N/A", "###", "missing")) %>%
+    
+    mutate(gender = na_if(gender, 999)) 
+
+head(tbl)
+```
+
+To pivot these data to long format, we will use the same pivot_longer command, but with two different arguments. The names_sep command identifies the component that separates each variable name into a characteristic and a timepoint. This is the underscore, "\_". The names_to argument details how information from RM columns (6:11) will be reorganized. The .value command within the names_to argument directs the repeated measures values into new columns with names corresponding to whatever preceded the underscore in the original column names. This can be very difficult to visualize. Execute the code below and use the output to back rationalize what each line of code accomplishes.
+
+```{r}
+#| message: false
+tbl <- read_csv('data/cholesterol.csv', 
+         na = c("N/A", "###", "missing")) %>%
+    
+    mutate(gender = na_if(gender, 999)) %>%
+    
+    pivot_longer(cols = weight_i:ldl_f,
+                 names_sep = "_",   
+                 names_to = c(".value", "timepoint"))
+
+head(tbl)
+```
+
+While the approach above is challenging to conceptualize, the code is shorter to write and the output is cleaner than other approaches. This approve also works well for cases involving a single RM variable.
+
+## Rename columns
+
+Below, we pipe the long formatted data produced by pivot_longer into a rename command that changes the variable named "gender" into "sex". This may be important because gender is an identity term and sex is a biological classification term. These terms have not been consistently used correctly in experimental biology.
+
+```{r}
+#| message: false
+tbl <- read_csv('data/cholesterol.csv', 
+         na = c("N/A", "###", "missing")) %>%
+    
+    mutate(gender = na_if(gender, 999)) %>%
+            
+    pivot_longer(cols = weight_i:ldl_f,
+                 names_sep = "_",   
+                 names_to = c(".value", "timepoint")) %>%
+    
+    rename(sex = gender)
+
+head(tbl)
+```
+
+## Change variable types
+
+When R sees numbers in a column, the language assumes the variable type is numeric. When R sees text values in a column, the language assumes the variable type is "character". Also, whenever we create new variables that have character values like "low", "21 - 30", or "obese", R assumes these are character variables. We need to explicitly tell R when these are factor (AKA categorical) variables, to unlock the methods that work on factor variables.
+
+Many ways exist to solve variable type problems. Here are three tidyverse-aligned methods:
+
+1.  `col_types =` Add this optional argument to the `read_csv` command. The argument recognizes a quoted string of single letters that stand for the different character types. For example, `col_types = c('fnffn')` would identify the five variables of a tibble as factor, numeric, factor, factor, numeric.
+
+2.  `mutate_at(vars(), as.factor)` Pipe a tibble or dataframe into the `mutate_at` command, identify multiple columns with the `vars()` argument and change the variables into factors using `as.factor`.
+
+3.  `mutate(variable1 = as.factor(variable1), variable2 = sqrt(variable1))` After piping a tibble or dataframe into the mutate command, each argument that follows either changes an existing variable, or creates a new one. A single mutate command can have many arguments that act on different variables towards different outcomes.
+
+The `col_types =` argument is often easiest, but doesn't work with all data import commands, can't change variables created later in the pipe chain, and can be problematic in other scenarios. For example, the gender variable above has missing values that must be recoded as NA before GENDER can be changed into a factor variable.
+
+The `mutate` and `mutate_at` commands are longer, but work in more scenarios and are more readable. The solution below uses a combination of all three methods to solve variable type problems. Run the code chunk and verify that name, gender/sex, group, and timepoint become factor variables.
+
+```{r}
+#| message: false
+tbl <- 
+    read_csv(file = "data/cholesterol.csv", 
+             na = c("N/A", "###", "missing"),
+             col_types = 'fnnnfnnnnnn') %>%
+    
+    mutate(gender = na_if(gender, 999),
+           gender = as.factor(gender)) %>%
+            
+    pivot_longer(cols = weight_i:ldl_f,
+                 names_sep = "_",   
+                 names_to = c(".value", "timepoint")) %>%
+    
+    rename(sex = gender) %>%
+    
+    mutate_at(vars(timepoint), as.factor)
+
+head(tbl)
+```
+
+Below we omit `col_types=` from `read_csv` and solve all variable type problems with a single call to `mutate_at`
+
+```{r}
+#| message: false
+tbl <- 
+    read_csv(file = "data/cholesterol.csv", 
+             na = c("N/A", "###", "missing")) %>%
+    
+    mutate(gender = na_if(gender, 999)) %>%
+            
+    pivot_longer(cols = weight_i:ldl_f,
+                 names_sep = "_",   
+                 names_to = c(".value", "timepoint")) %>%
+    
+    rename(sex = gender) %>%
+    
+    mutate_at(vars(sex, group, timepoint), as.factor)
+
+head(tbl)
+```
+
+## Recode columns with fct_recode and mutate
+
+Now that sex, group, and timepoint are the correct variable type, we can solve the numeric coding scheme used for their values. Like `mutate_at`, the `mutate` command allows us to make changes to existing variables. With `mutate`, though, we use single arguments to change one variable at a time.
+
+Below we change the coding scheme of factor variables with each argument structured as
+
+`variable = fct_recode(variable, "new level name" = "old level name")`.
+
+```{r}
+#| message: false
+tbl <- 
+    read_csv(file = "data/cholesterol.csv", 
+             na = c("N/A", "###", "missing"),
+             col_types = 'fnnnfnnnnnn') %>%
+    
+    mutate(gender = na_if(gender, 999)) %>%
+            
+    pivot_longer(cols = weight_i:ldl_f,
+                 names_sep = "_",   
+                 names_to = c(".value", "timepoint")) %>%
+    
+    rename(sex = gender) %>%
+    
+    mutate_at(vars(sex, timepoint), as.factor) %>%
+    
+    mutate(sex = fct_recode(sex, 'male' = '0', 'female' = '1'),
+           group = fct_recode(group, 'control' = '0', 'statin' = '1'),
+           timepoint = fct_recode(timepoint, 'initial' = 'i', 'final' = 'f'))
+
+head(tbl)
+```
+
+## Create variables with `ifelse()`
+
+`ifelse()` statements iterate over a vector and return one of two values based on the result of a logical test expression. We often use`ifelse()` to create new variables based on the values of one or more existing variables. The three required arguments for `ifelse()`are shown below.
+
+`test =` \<test expressions using relational operators\>
+
+`yes =` \<value to return when test == TRUE\>
+
+`no =` \<value to return when test == FALSE, OR enter another ifelse\>
+
+Below we use `ifelse()` to create a variable, LetterGrade, that equals "pass" when points is at least 7, and "fail" when points is less than 7.
+
+```{r}
+#| message: false
+points = 1:10
+LetterGrade = ifelse(test = points >= 7,
+           yes = "pass",
+           no = "fail")
+tibble(points,LetterGrade)
+```
+
+## Nested `ifelse()` Statements
+
+Nested `ifelse()` statements create variables with more than two values. For three values, the `no =` argument introduces a new `ifelse()` statement.The new `ifelse()` statement can identify two additional values for a total of three, and is "nested" because it lives within the original `ifelse()` statement. The nesting process is repeated until all the desired levels are created. Below we use nested `ifelse()` commands to create letter grades from points and we omit the argument names for brevity and readability.
+
+```{r}
+#| message: false
+points = 1:10
+LetterGrade = ifelse(points <= 6, "F",
+                     ifelse(points < 7, "D",
+                            ifelse(points < 8,"C",
+                                   ifelse(points < 9, "B", "A"))))
+tibble(points,LetterGrade)
+```
+
+## Create new variables with ifelse and mutate
+
+To create new variables from existing variables we again use mutate. Below we create a total cholesterol column that is a sum of the hdl and ldl columns. We also create a body mass index (bmi) column from height and weight. Lastly, we add a categorical variable that places individuals into groups based on their age.
+
+Notice, that we do not extend the pipe chain below to create tc, bmi, and age_c. We merely add additional arguments to the mutate command that create the desired variables. Lastly, we use `relocate` to change the order of variables within the tibble. This optional step is purely organizational and has no effect on function.
+
+```{r}
+#| message: false
+tbl <- 
+    read_csv(file = "data/cholesterol.csv", 
+             na = c("N/A", "###", "missing"),
+             col_types = 'fnnnfnnnnnn') %>%
+    
+    mutate(gender = na_if(gender, 999)) %>%
+            
+    pivot_longer(cols = weight_i:ldl_f,
+                 names_sep = "_",   
+                 names_to = c(".value", "timepoint")) %>%
+    
+    rename(sex = gender) %>%
+    
+    mutate_at(vars(sex, timepoint), as.factor) %>%
+    
+    mutate(sex = fct_recode(sex, 'male' = '0', 'female' = '1'),
+           group = fct_recode(group, 'control' = '0', 'statin' = '1'),
+           timepoint = fct_recode(timepoint, 'initial' = 'i', 'final' = 'f'),
+           tc = hdl + ldl,
+           bmi = (weight/(height)^2) * 703,
+           age_c = ifelse(test = age < 31, 
+                          yes = "20 - 30", 
+                          no = ifelse(test = age < 41,
+                                      yes = '31 - 40',
+                                      no = '41 - 55')),
+           age_c = factor(age_c)) %>%
+    
+    # relocate variables within the tibble
+    relocate(age_c, .after = age) %>%
+    relocate(bmi, .after = weight)
+    
+head(tbl)
+```
