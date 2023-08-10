@@ -15,7 +15,7 @@ Use of this content is open to the public and has no restrictions whatsoever.
 IPHY instructors can follow the steps below to contribute to the repository.
 
 1. For developing and suggesting new content:\
-  a. Clone the repository (create a local FIT repository) and create a new branch based on the develop branch.\
+  a. Clone the repository (create a local GIT repository) and create a new branch based on the develop branch.\
   b. Make changes and commits to your personal branch.\
   c. Push the branch to the remote repository.\
   d. Create a pull request (PR) from your branch to the develop branch.\
