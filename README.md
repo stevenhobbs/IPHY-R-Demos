@@ -10,6 +10,26 @@ The R Demo files in this repository are synced with the online resource [Data Es
 
 Use of this content is open to the public and has no restrictions whatsoever.
 
+### IPHY Collaborators
+
+IPHY instructors can follow the steps below to contribute to the repository.
+
+For developing and suggesting new content:
+a. Clone the repository and create a new branch based on the develop branch.
+b. Make changes and commits to your personal branch.
+c. Push the branch to the remote repository.
+d. Create a pull request (PR) from your branch to the develop branch.
+e. I will review the PR, provide feedback, and approve it if appropriate.
+f. Once approved, collaborators can merge the PR into the develop branch.
+
+For suggesting changes to the main Branch (i.e. typo fixes, bug fixes, small changes):
+a. Clone the repository and create a new branch based on the main branch.
+b. Make changes and commits to your branch.
+c. Push the branch to the remote repository.
+d. Create a pull request (PR) from your branch to the main branch.
+e. I will review and approve the PR.
+f. Once approved, you can merge the PR into the main branch.
+
 ### Contact
 
 For questions, please email: steven.hobbs@colorado.edu
