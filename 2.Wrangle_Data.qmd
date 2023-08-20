@@ -241,7 +241,7 @@ tbl <-
            group = recode(group, '0' = 'control', '1' = 'statin'),
            timepoint = fct_recode(timepoint, 'initial' = 'i', 'final' = 'f'))
 
-head(tbl, 20)
+head(tbl)
 ```
 
 ## Create variables with `ifelse()`
