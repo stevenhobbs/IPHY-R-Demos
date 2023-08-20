@@ -204,13 +204,21 @@ tbl <-
 head(tbl)
 ```
 
-## Recode columns with fct_recode and mutate
+## Recode columns within mutate
 
 Now that sex, group, and timepoint are the correct variable type, we can solve the numeric coding scheme used for their values. Like `mutate_at`, the `mutate` command allows us to make changes to existing variables. With `mutate`, though, we use single arguments to change one variable at a time.
 
-Below we change the coding scheme of factor variables with each argument structured as
+The level names of factor variables can be changed with the `factor`, `recode`, or `fct_recode` commands. These commands produce the same result, but structure the key arguments differently. The `factor` command uses a labels argument that lists new level names in the numeric or alphabetic order of existing names.
 
-`variable = fct_recode(variable, "new level name" = "old level name")`.
+`variable = factor(variable, labels = c("new name 1", "new name 2"))`
+
+The fct_recode and recode commands use an argument that equates new to existing level names, but order terms around the equality differently.
+
+`variable = recode(variable, "0" = "new name 1, "1" = "new name 2")`
+
+`variable = fct_recode(variable, "new name 1" = "0", "new name 2" = "1")`
+
+Because existing names need not be referenced with the `factor` command, this command is often shorter than the other two. However, the `recode` and `fct_recode` commands are more easily used to change a subset of level names, or even a single level name. Below we use each of these commands to recode a factor variable in our cholesterol data:
 
 ```{r}
 #| message: false
@@ -229,11 +237,11 @@ tbl <-
     
     mutate_at(vars(sex, timepoint), as.factor) %>%
     
-    mutate(sex = fct_recode(sex, 'male' = '0', 'female' = '1'),
-           group = fct_recode(group, 'control' = '0', 'statin' = '1'),
+    mutate(sex = factor(sex, labels = c('male', 'female')),
+           group = recode(group, '0' = 'control', '1' = 'statin'),
            timepoint = fct_recode(timepoint, 'initial' = 'i', 'final' = 'f'))
 
-head(tbl)
+head(tbl, 20)
 ```
 
 ## Create variables with `ifelse()`
@@ -294,8 +302,8 @@ tbl <-
     
     mutate_at(vars(sex, timepoint), as.factor) %>%
     
-    mutate(sex = fct_recode(sex, 'male' = '0', 'female' = '1'),
-           group = fct_recode(group, 'control' = '0', 'statin' = '1'),
+    mutate(sex = factor(sex, labels = c('male', 'female')),
+           group = recode(group, '0' = 'control', '1' = 'statin'),
            timepoint = fct_recode(timepoint, 'initial' = 'i', 'final' = 'f'),
            tc = hdl + ldl,
            bmi = (weight/(height)^2) * 703,
