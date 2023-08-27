@@ -124,7 +124,7 @@ tbl <- read_csv('data/cholesterol.csv',
 head(tbl)
 ```
 
-While the approach above is challenging to conceptualize, the code is shorter to write and the output is cleaner than other approaches. This approve also works well for cases involving a single RM variable.
+While the pivoting approach above is challenging to conceptualize, the code is short to write, and the dataframe produced doesn't require additional formatting steps that other methods may require. This approach also works well for cases involving a single RM variable.
 
 ## Rename columns
 
@@ -206,19 +206,19 @@ head(tbl)
 
 ## Recode columns within mutate
 
-Now that sex, group, and timepoint are the correct variable type, we can solve the numeric coding scheme used for their values. Like `mutate_at`, the `mutate` command allows us to make changes to existing variables. With `mutate`, though, we use single arguments to change one variable at a time.
+Now that sex, group, and timepoint are the correct variable type, we can solve the numeric coding scheme used for their values. Like `mutate_at`, the `mutate` command allows us to change existing variables. With `mutate`, though, we use single arguments to change one variable at a time.
 
-The level names of factor variables can be changed with the `factor`, `recode`, or `fct_recode` commands. These commands produce the same result, but structure the key arguments differently. The `factor` command uses a labels argument that lists new level names in the numeric or alphabetic order of existing names.
+The level names of factor variables can be changed with the `factor`, `recode`, or `fct_recode` commands. These commands produce the same result, but use slightly different approaches. The `factor` command uses a labels argument that lists new level names in the numeric or alphabetic order of existing names. The `fct_recode` and `recode` commands use an argument that equates new to existing level names, but expect the level terms to be presented in opposite order. Below is an example use of each command used to change "0" and "1" into "new name 1" and "new name 2":
+
+#### `factor`, `recode`, `fct_recode example use:`
 
 `variable = factor(variable, labels = c("new name 1", "new name 2"))`
-
-The fct_recode and recode commands use an argument that equates new to existing level names, but order terms around the equality differently.
 
 `variable = recode(variable, "0" = "new name 1, "1" = "new name 2")`
 
 `variable = fct_recode(variable, "new name 1" = "0", "new name 2" = "1")`
 
-Because existing names need not be referenced with the `factor` command, this command is often shorter than the other two. However, the `recode` and `fct_recode` commands are more easily used to change a subset of level names, or even a single level name. Below we use each of these commands to recode a factor variable in our cholesterol data:
+The `factor` command is often shorter than the other two because existing level names need not be referenced. However, the `recode` and `fct_recode` commands can be shorter for changing a subset of level names and are more explicit when changing one text value to another. Remember that each of these lines of code would have to be placed inside of a mutate command to be included within a data import pipe chain. Below we use each of these commands inside mutate to change the level names of a factor variable in our cholesterol data:
 
 ```{r}
 #| message: false
