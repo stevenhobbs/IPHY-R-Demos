@@ -116,9 +116,9 @@ str(my_list)
 
 ## Tidyverse Pipe operator, %\>%
 
-The pipe operator is a fantastic command that makes code easier to write and easier to understand. Piping is particularly useful with dataframes and tibbles. Essentially the command means...
+The pipe operator is a fantastic feature that makes code easier to write and easier to understand. Piping is particularly useful with dataframes and tibbles. Essentially the command means "take the left thing and *pipe it* into first position of the right thing".
 
-Take the left thing and "pipe it" into the right thing.
+Examples:
 
 ```{r}
 # Unnecessary piping (just for demonstration)
