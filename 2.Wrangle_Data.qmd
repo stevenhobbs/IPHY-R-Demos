@@ -39,10 +39,18 @@ rm(list = ls())
 
 # Import, summarize, and preview data 
 tbl <- read_csv('data/cholesterol.csv')
-View(tbl) # create a tabular data view, sort-able by individual columns. Do NOT include in script!
-head(tbl) # show the first 6 rows of the data
-glimpse(tbl) # list the variables vertically, along with variable types and values
-summary(tbl) # Show summary statistics and the number of NA values for each variable
+
+# create a tabular data view, sort-able by individual columns. Do NOT include View commands in script!
+View(tbl) 
+
+# show the first 6 rows of the data
+head(tbl) 
+
+# list the variables vertically, along with variable types and values
+glimpse(tbl) 
+
+# Show summary statistics and the number of NA values for each variable
+summary(tbl) 
 ```
 
 ## Code Missing Values
