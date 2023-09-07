@@ -27,7 +27,7 @@ Common problems with data include missing values coded strangely, impossible or 
 
 Rarely do we write a script that solves all problems perfectly the first time. We often return to earlier sections to add code we did not initially realize was necessary. However, jumping around within a script can introduce sequence errors, where code written near the top relies upon code written lower down. Because the code was initially executed in the order written, not the order of appearance, errors may not occur until rendering. During rendering,  *R* begins with an empty environment and executes code from top to bottom. Any code that was written out of order will now throw an error.
 
-An efficient data and reliable wrangling strategy is to fix problems immediately with a pipe chain data wrangling "recipe". With this strategy, our code pipes the output of the import command into a chain of problem-solving commands linked together by the pipe operator, %\>%. The receipe is built up progressively, adding and testing one component at a time. When complete, we have code that simultaneously imports data and fixes problems to produce a "mature" tibble that is ready for analysis.
+An efficient data and reliable wrangling strategy is to fix problems immediately with a pipe chain data wrangling "recipe". With this strategy, our code pipes the output of the import command into a chain of problem-solving commands linked together by the pipe operator, %\>%. The recipe is built up progressively, adding and testing one component at a time. When complete, we have code that simultaneously imports data and fixes problems to produce a "mature" tibble that is ready for analysis.
 
 ## Inspect the data
 
