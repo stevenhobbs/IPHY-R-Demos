@@ -27,7 +27,7 @@ Common problems with data include missing values coded strangely, impossible or 
 
 Rarely do we write a script that solves all problems perfectly the first time. We often return to earlier sections to add code we did not initially realize was necessary. However, jumping around within a script can introduce sequence errors, where code written near the top relies upon code written lower down. Because the code was initially executed in the order written, not the order of appearance, errors may not occur until rendering. During rendering,  *R* begins with an empty environment and executes code from top to bottom. Any code that was written out of order will now throw an error.
 
-An efficient data and reliable wrangling strategy is to fix problems immediately with a pipe chain data wrangling "recipe". With this strategy, our code pipes the output of the import command into a chain of problem-solving commands linked together by the pipe operator, %\>%. The receipe is built up progressively, adding and testing one component at a time. When complete, we have code that simultaneously imports data and fixes problems to produce a "mature" tibble that is ready for analysis.
+An efficient data and reliable wrangling strategy is to fix problems immediately with a pipe chain data wrangling "recipe". With this strategy, our code pipes the output of the import command into a chain of problem-solving commands linked together by the pipe operator, %\>%. The recipe is built up progressively, adding and testing one component at a time. When complete, we have code that simultaneously imports data and fixes problems to produce a "mature" tibble that is ready for analysis.
 
 ## Inspect the data
 
@@ -96,11 +96,20 @@ When only one characteristic is observed at multiple timepoints, pivoting to lon
 tbl <- 
     read_csv("data/margarine.csv") %>%
     
-    pivot_longer(cols = 2:4,
+    pivot_longer(cols = Before:After8weeks,
                  names_to = "timepoint",
                  values_to = "cholesterol")
 head(tbl)
 ```
+
+**Side Note - Quoting or Unquoting variables?**\
+The variables Before and After8weeks in the above code chunk are unquoted, while the variables timepoint and cholesterol are quoted. Why the difference? In general, variables of tibbles that already exist in memory (i.e. are listed in the R Environment tab) can usually be referenced without quotation marks. A few exceptions exist, such as when using brackets to reduce tibbles, but these are rare and we will generally use tidyverse commands instead of brackets.\
+\
+When creating a new variable, the name for that variable must be set in parentheses. A convenient way to think about the use of quotation marks with variables [in tidyverse commands]{.underline} is:
+
+-   **quoted = create something new**
+
+-   **unquoted = access something in memory**
 
 ### Pivot with multiple RM variables
 
@@ -129,7 +138,7 @@ tbl <- read_csv('data/cholesterol.csv',
                  names_sep = "_",   
                  names_to = c(".value", "timepoint"))
 
-head(tbl)
+head(tbl) %>% kable %>% kable_classic()
 ```
 
 While the pivoting approach above is challenging to conceptualize, the code is short to write, and the dataframe produced doesn't require additional formatting steps that other methods may require. This approach also works well for cases involving a single RM variable.
@@ -186,7 +195,7 @@ tbl <-
     
     rename(sex = gender) %>%
     
-    mutate_at(vars(timepoint), as.factor)
+    mutate_at(vars(timepoint), factor)
 
 head(tbl)
 ```
@@ -222,7 +231,7 @@ The level names of factor variables can be changed with the `factor`, `recode`, 
 
 `variable = factor(variable, labels = c("new name 1", "new name 2"))`
 
-`variable = recode(variable, "0" = "new name 1, "1" = "new name 2")`
+`variable = recode(variable, "0" = "new name 1", "1" = "new name 2")`
 
 `variable = fct_recode(variable, "new name 1" = "0", "new name 2" = "1")`
 
@@ -308,7 +317,7 @@ tbl <-
     
     rename(sex = gender) %>%
     
-    mutate_at(vars(sex, timepoint), as.factor) %>%
+    mutate_at(vars(name, sex, timepoint), as.factor) %>%
     
     mutate(sex = factor(sex, labels = c('male', 'female')),
            group = recode(group, '0' = 'control', '1' = 'statin'),
