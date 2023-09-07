@@ -39,10 +39,18 @@ rm(list = ls())
 
 # Import, summarize, and preview data 
 tbl <- read_csv('data/cholesterol.csv')
-View(tbl) # create a tabular data view, sort-able by individual columns. Do NOT include in script!
-head(tbl) # show the first 6 rows of the data
-glimpse(tbl) # list the variables vertically, along with variable types and values
-summary(tbl) # Show summary statistics and the number of NA values for each variable
+
+# create a tabular data view, sort-able by individual columns. Do NOT include View commands in script!
+View(tbl) 
+
+# show the first 6 rows of the data
+head(tbl) 
+
+# list the variables vertically, along with variable types and values
+glimpse(tbl) 
+
+# Show summary statistics and the number of NA values for each variable
+summary(tbl) 
 ```
 
 ## Code Missing Values
@@ -88,11 +96,20 @@ When only one characteristic is observed at multiple timepoints, pivoting to lon
 tbl <- 
     read_csv("data/margarine.csv") %>%
     
-    pivot_longer(cols = 2:4,
+    pivot_longer(cols = Before:After8weeks,
                  names_to = "timepoint",
                  values_to = "cholesterol")
 head(tbl)
 ```
+
+**Side Note - Quoting or Unquoting variables?** \
+The variables Before and After8weeks in the above code chunk are unquoted, while the variables timepoint and cholesterol are quoted. Why the differrence? In general, variables of tibbles that already exist in memory (i.e. are listed in the R Environment tab) can usually be referenced without quotation marks. A few exceptions exist, such as when using brackets to reduce tibbles, but these are rare and we will generally use tidyverse commands instead of brackets. \
+\
+When creating a new variable, the name for that variable must be set in parentheses. A convenient way to think about the use of quotaion marks with variables [in tidyverse commands]{.underline} is:
+
+-   **quoted = create something new**
+
+-   **unquoted = access something in memory**
 
 ### Pivot with multiple RM variables
 
@@ -121,10 +138,10 @@ tbl <- read_csv('data/cholesterol.csv',
                  names_sep = "_",   
                  names_to = c(".value", "timepoint"))
 
-head(tbl)
+head(tbl) %>% kable %>% kable_classic()
 ```
 
-While the approach above is challenging to conceptualize, the code is shorter to write and the output is cleaner than other approaches. This approve also works well for cases involving a single RM variable.
+While the pivoting approach above is challenging to conceptualize, the code is short to write, and the dataframe produced doesn't require additional formatting steps that other methods may require. This approach also works well for cases involving a single RM variable.
 
 ## Rename columns
 
@@ -178,7 +195,7 @@ tbl <-
     
     rename(sex = gender) %>%
     
-    mutate_at(vars(timepoint), as.factor)
+    mutate_at(vars(timepoint), factor)
 
 head(tbl)
 ```
@@ -204,13 +221,21 @@ tbl <-
 head(tbl)
 ```
 
-## Recode columns with fct_recode and mutate
+## Recode columns within mutate
 
-Now that sex, group, and timepoint are the correct variable type, we can solve the numeric coding scheme used for their values. Like `mutate_at`, the `mutate` command allows us to make changes to existing variables. With `mutate`, though, we use single arguments to change one variable at a time.
+Now that sex, group, and timepoint are the correct variable type, we can solve the numeric coding scheme used for their values. Like `mutate_at`, the `mutate` command allows us to change existing variables. With `mutate`, though, we use single arguments to change one variable at a time.
 
-Below we change the coding scheme of factor variables with each argument structured as
+The level names of factor variables can be changed with the `factor`, `recode`, or `fct_recode` commands. These commands produce the same result, but use slightly different approaches. The `factor` command uses a labels argument that lists new level names in the numeric or alphabetic order of existing names. The `fct_recode` and `recode` commands use an argument that equates new to existing level names, but expect the level terms to be presented in opposite order. Below is an example use of each command used to change "0" and "1" into "new name 1" and "new name 2":
 
-`variable = fct_recode(variable, "new level name" = "old level name")`.
+#### `factor`, `recode`, `fct_recode example use:`
+
+`variable = factor(variable, labels = c("new name 1", "new name 2"))`
+
+`variable = recode(variable, "0" = "new name 1", "1" = "new name 2")`
+
+`variable = fct_recode(variable, "new name 1" = "0", "new name 2" = "1")`
+
+The `factor` command is often shorter than the other two because existing level names need not be referenced. However, the `recode` and `fct_recode` commands can be shorter for changing a subset of level names and are more explicit when changing one text value to another. Remember that each of these lines of code would have to be placed inside of a mutate command to be included within a data import pipe chain. Below we use each of these commands inside mutate to change the level names of a factor variable in our cholesterol data:
 
 ```{r}
 #| message: false
@@ -229,8 +254,8 @@ tbl <-
     
     mutate_at(vars(sex, timepoint), as.factor) %>%
     
-    mutate(sex = fct_recode(sex, 'male' = '0', 'female' = '1'),
-           group = fct_recode(group, 'control' = '0', 'statin' = '1'),
+    mutate(sex = factor(sex, labels = c('male', 'female')),
+           group = recode(group, '0' = 'control', '1' = 'statin'),
            timepoint = fct_recode(timepoint, 'initial' = 'i', 'final' = 'f'))
 
 head(tbl)
@@ -292,10 +317,10 @@ tbl <-
     
     rename(sex = gender) %>%
     
-    mutate_at(vars(sex, timepoint), as.factor) %>%
+    mutate_at(vars(name, sex, timepoint), as.factor) %>%
     
-    mutate(sex = fct_recode(sex, 'male' = '0', 'female' = '1'),
-           group = fct_recode(group, 'control' = '0', 'statin' = '1'),
+    mutate(sex = factor(sex, labels = c('male', 'female')),
+           group = recode(group, '0' = 'control', '1' = 'statin'),
            timepoint = fct_recode(timepoint, 'initial' = 'i', 'final' = 'f'),
            tc = hdl + ldl,
            bmi = (weight/(height)^2) * 703,
