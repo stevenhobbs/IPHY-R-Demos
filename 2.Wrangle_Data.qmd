@@ -103,9 +103,9 @@ head(tbl)
 ```
 
 **Side Note - Quoting or Unquoting variables?** \
-The variables Before and After8weeks in the above code chunk are unquoted, while the variables timepoint and cholesterol are quoted. Why the differrence? In general, variables of tibbles that already exist in memory (i.e. are listed in the R Environment tab) can usually be referenced without quotation marks. A few exceptions exist, such as when using brackets to reduce tibbles, but these are rare and we will generally use tidyverse commands instead of brackets. \
+The variables Before and After8weeks in the above code chunk are unquoted, while the variables timepoint and cholesterol are quoted. Why the difference? In general, variables of tibbles that already exist in memory (i.e. are listed in the R Environment tab) can usually be referenced without quotation marks. A few exceptions exist, such as when using brackets to reduce tibbles, but these are rare and we will generally use tidyverse commands instead of brackets. \
 \
-When creating a new variable, the name for that variable must be set in parentheses. A convenient way to think about the use of quotaion marks with variables [in tidyverse commands]{.underline} is:
+When creating a new variable, the name for that variable must be set in parentheses. A convenient way to think about the use of quotation marks with variables [in tidyverse commands]{.underline} is:
 
 -   **quoted = create something new**
 
