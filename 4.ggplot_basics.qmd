@@ -77,8 +77,7 @@ tb_camp %>%
     
     ggplot(mapping = aes(x=ETHNIC)) +
     
-    geom_bar(position = position_dodge(.95),
-             color = 'blue',
+    geom_bar(color = 'blue',
              fill = 'green')
 ```
 
@@ -92,8 +91,7 @@ tb_chol %>%
     ggplot(mapping = aes(sex, height)) + 
     
     geom_bar(stat="summary",
-             fun = mean,
-             position = position_dodge(.95))
+             fun = mean)
 ```
 
 ### Pointrange graph
@@ -108,8 +106,7 @@ tb_chol %>%
     geom_pointrange(stat = "summary",
                     fun = mean, 
                     fun.min = function(X) mean(X) - sd(X),
-                    fun.max = function(X) mean(X) + sd(X),
-                    position = position_dodge(.95))
+                    fun.max = function(X) mean(X) + sd(X))
 ```
 
 ### Boxplot
